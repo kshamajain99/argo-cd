@@ -184,6 +184,8 @@ jobs:
           git clean -fd
           mkdir -p dist/
           make image IMAGE_TAG="${TARGET_VERSION}" DOCKER_PUSH=false
+          make UTIL_CLI_NAME=argocd-util-darwin-amd64 GOOS=darwin argocd-util
+          make UTIL_CLI_NAME=argocd-util-windows-amd64.exe GOOS=windows argocd-util
           make release-cli
           chmod +x ./dist/argocd-linux-amd64
           ./dist/argocd-linux-amd64 version --client
