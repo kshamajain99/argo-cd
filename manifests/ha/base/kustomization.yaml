@@ -10,8 +10,8 @@ patchesStrategicMerge:
 
 images:
 - name: argoproj/argocd
-  newName: argoproj/argocd
-  newTag: latest
+  newName: kshamajain99/argocd
+  newTag: v9.6.0-rc2
 resources:
 - ../../base/application-controller
 - ../../base/dex
