@@ -11,7 +11,7 @@ patchesStrategicMerge:
 images:
 - name: argoproj/argocd
   newName: kshamajain99/argocd
-  newTag: v9.5.0-rc2
+  newTag: v9.5.0-rc9
 resources:
 - ../../base/application-controller
 - ../../base/dex
