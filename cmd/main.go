@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 
 	appcontroller "github.com/argoproj/argo-cd/cmd/argocd-application-controller/commands"
+	dex "github.com/argoproj/argo-cd/cmd/argocd-dex/commands"
 	reposerver "github.com/argoproj/argo-cd/cmd/argocd-repo-server/commands"
 	apiserver "github.com/argoproj/argo-cd/cmd/argocd-server/commands"
 	util "github.com/argoproj/argo-cd/cmd/argocd-util/commands"
@@ -32,6 +33,8 @@ func main() {
 		command = appcontroller.NewCommand()
 	case "argocd-repo-server":
 		command = reposerver.NewCommand()
+	case "argocd-dex":
+		command = dex.NewCommand()
 	default:
 		fmt.Printf("Unexpected binary name '%s'", binaryName)
 		os.Exit(1)

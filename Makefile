@@ -236,8 +236,8 @@ manifests: test-tools-image
 	$(call run-in-test-client,make manifests-local IMAGE_NAMESPACE='${IMAGE_NAMESPACE}' IMAGE_TAG='${IMAGE_TAG}')
 
 # consolidated binary for cli, util, server, repo-server, controller
-.PHONY: argocd
-argocd: clean-debug
+.PHONY: argocd-all
+argocd-all: clean-debug
 	CGO_ENABLED=0 ${PACKR_CMD} build -v -i -ldflags '${LDFLAGS}' -o ${DIST_DIR}/${BIN_NAME} ./cmd
 
 # NOTE: we use packr to do the build instead of go, since we embed swagger files and policy.csv

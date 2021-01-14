@@ -117,12 +117,12 @@ RUN go mod download
 
 # Perform the build
 COPY . .
-RUN make argocd
+RUN make argocd-all
 
 ARG BUILD_ALL_CLIS=true
 RUN if [ "$BUILD_ALL_CLIS" = "true" ] ; then \
-    make BIN_NAME=argocd-darwin-amd64 GOOS=darwin argocd && \
-    make BIN_NAME=argocd-windows-amd64.exe GOOS=windows argocd \
+    make BIN_NAME=argocd-darwin-amd64 GOOS=darwin argocd-all && \
+    make BIN_NAME=argocd-windows-amd64.exe GOOS=windows argocd-all \
     ; fi
 
 ####################################################################################################

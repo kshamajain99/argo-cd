@@ -4,17 +4,12 @@ import (
 	"bufio"
 	"context"
 	"fmt"
-	"io"
-	"io/ioutil"
-	"os"
-	"os/exec"
-	"reflect"
-	"syscall"
-
 	"github.com/argoproj/gitops-engine/pkg/utils/kube"
 	"github.com/ghodss/yaml"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
+	"io"
+	"io/ioutil"
 	apiv1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -24,11 +19,12 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
+	"os"
+	"reflect"
 
 	"github.com/argoproj/argo-cd/common"
 	"github.com/argoproj/argo-cd/util/cli"
 	"github.com/argoproj/argo-cd/util/db"
-	"github.com/argoproj/argo-cd/util/dex"
 	"github.com/argoproj/argo-cd/util/errors"
 	"github.com/argoproj/argo-cd/util/settings"
 )
@@ -66,8 +62,6 @@ func NewCommand() *cobra.Command {
 	}
 
 	command.AddCommand(cli.NewVersionCmd(cliName))
-	command.AddCommand(NewRunDexCommand())
-	command.AddCommand(NewGenDexConfigCommand())
 	command.AddCommand(NewImportCommand())
 	command.AddCommand(NewExportCommand())
 	command.AddCommand(NewClusterConfig())
@@ -80,131 +74,6 @@ func NewCommand() *cobra.Command {
 	command.Flags().StringVar(&logFormat, "logformat", "text", "Set the logging format. One of: text|json")
 	command.Flags().StringVar(&logLevel, "loglevel", "info", "Set the logging level. One of: debug|info|warn|error")
 	return command
-}
-
-func NewRunDexCommand() *cobra.Command {
-	var (
-		clientConfig clientcmd.ClientConfig
-	)
-	var command = cobra.Command{
-		Use:   "rundex",
-		Short: "Runs dex generating a config using settings from the Argo CD configmap and secret",
-		RunE: func(c *cobra.Command, args []string) error {
-			_, err := exec.LookPath("dex")
-			errors.CheckError(err)
-			config, err := clientConfig.ClientConfig()
-			errors.CheckError(err)
-			namespace, _, err := clientConfig.Namespace()
-			errors.CheckError(err)
-			kubeClientset := kubernetes.NewForConfigOrDie(config)
-			settingsMgr := settings.NewSettingsManager(context.Background(), kubeClientset, namespace)
-			prevSettings, err := settingsMgr.GetSettings()
-			errors.CheckError(err)
-			updateCh := make(chan *settings.ArgoCDSettings, 1)
-			settingsMgr.Subscribe(updateCh)
-
-			for {
-				var cmd *exec.Cmd
-				dexCfgBytes, err := dex.GenerateDexConfigYAML(prevSettings)
-				errors.CheckError(err)
-				if len(dexCfgBytes) == 0 {
-					log.Infof("dex is not configured")
-				} else {
-					err = ioutil.WriteFile("/tmp/dex.yaml", dexCfgBytes, 0644)
-					errors.CheckError(err)
-					log.Debug(redactor(string(dexCfgBytes)))
-					cmd = exec.Command("dex", "serve", "/tmp/dex.yaml")
-					cmd.Stdout = os.Stdout
-					cmd.Stderr = os.Stderr
-					err = cmd.Start()
-					errors.CheckError(err)
-				}
-
-				// loop until the dex config changes
-				for {
-					newSettings := <-updateCh
-					newDexCfgBytes, err := dex.GenerateDexConfigYAML(newSettings)
-					errors.CheckError(err)
-					if string(newDexCfgBytes) != string(dexCfgBytes) {
-						prevSettings = newSettings
-						log.Infof("dex config modified. restarting dex")
-						if cmd != nil && cmd.Process != nil {
-							err = cmd.Process.Signal(syscall.SIGTERM)
-							errors.CheckError(err)
-							_, err = cmd.Process.Wait()
-							errors.CheckError(err)
-						}
-						break
-					} else {
-						log.Infof("dex config unmodified")
-					}
-				}
-			}
-		},
-	}
-
-	clientConfig = cli.AddKubectlFlagsToCmd(&command)
-	return &command
-}
-
-func NewGenDexConfigCommand() *cobra.Command {
-	var (
-		clientConfig clientcmd.ClientConfig
-		out          string
-	)
-	var command = cobra.Command{
-		Use:   "gendexcfg",
-		Short: "Generates a dex config from Argo CD settings",
-		RunE: func(c *cobra.Command, args []string) error {
-			config, err := clientConfig.ClientConfig()
-			errors.CheckError(err)
-			namespace, _, err := clientConfig.Namespace()
-			errors.CheckError(err)
-			kubeClientset := kubernetes.NewForConfigOrDie(config)
-			settingsMgr := settings.NewSettingsManager(context.Background(), kubeClientset, namespace)
-			settings, err := settingsMgr.GetSettings()
-			errors.CheckError(err)
-			dexCfgBytes, err := dex.GenerateDexConfigYAML(settings)
-			errors.CheckError(err)
-			if len(dexCfgBytes) == 0 {
-				log.Infof("dex is not configured")
-				return nil
-			}
-			if out == "" {
-				dexCfg := make(map[string]interface{})
-				err := yaml.Unmarshal(dexCfgBytes, &dexCfg)
-				errors.CheckError(err)
-				if staticClientsInterface, ok := dexCfg["staticClients"]; ok {
-					if staticClients, ok := staticClientsInterface.([]interface{}); ok {
-						for i := range staticClients {
-							staticClient := staticClients[i]
-							if mappings, ok := staticClient.(map[string]interface{}); ok {
-								for key := range mappings {
-									if key == "secret" {
-										mappings[key] = "******"
-									}
-								}
-								staticClients[i] = mappings
-							}
-						}
-						dexCfg["staticClients"] = staticClients
-					}
-				}
-				errors.CheckError(err)
-				maskedDexCfgBytes, err := yaml.Marshal(dexCfg)
-				errors.CheckError(err)
-				fmt.Print(string(maskedDexCfgBytes))
-			} else {
-				err = ioutil.WriteFile(out, dexCfgBytes, 0644)
-				errors.CheckError(err)
-			}
-			return nil
-		},
-	}
-
-	clientConfig = cli.AddKubectlFlagsToCmd(&command)
-	command.Flags().StringVarP(&out, "out", "o", "", "Output to the specified file instead of stdout")
-	return &command
 }
 
 // NewImportCommand defines a new command for exporting Kubernetes and Argo CD resources.
