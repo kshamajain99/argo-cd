@@ -207,9 +207,9 @@ release-cli: clean-debug image
 	docker cp tmp-argocd-linux:/usr/local/bin/argocd ${DIST_DIR}/argocd-linux-amd64
 	docker cp tmp-argocd-linux:/usr/local/bin/argocd-darwin-amd64 ${DIST_DIR}/argocd-darwin-amd64
 	docker cp tmp-argocd-linux:/usr/local/bin/argocd-windows-amd64.exe ${DIST_DIR}/argocd-windows-amd64.exe
-	docker cp tmp-argocd-linux:/usr/local/bin/argocd ${DIST_DIR}/argocd-util-linux-amd64
-	docker cp tmp-argocd-linux:/usr/local/bin/argocd-darwin-amd64 ${DIST_DIR}/argocd-util-darwin-amd64
-	docker cp tmp-argocd-linux:/usr/local/bin/argocd-windows-amd64.exe ${DIST_DIR}/argocd-util-windows-amd64.exe
+	ln -s  ${DIST_DIR}/argocd-linux-amd64 ${DIST_DIR}/argocd-util-linux-amd64
+	ln -s ${DIST_DIR}/argocd-darwin-amd64 ${DIST_DIR}/argocd-util-darwin-amd64
+	ln -s ${DIST_DIR}/argocd-windows-amd64.exe ${DIST_DIR}/argocd-util-windows-amd64.exe
 	docker rm tmp-argocd-linux
 
 .PHONY: argocd-util
@@ -267,15 +267,15 @@ IMAGE_TAG="dev-$(shell git describe --always --dirty)"
 image: packr
 	docker build -t argocd-base --target argocd-base .
 	docker build -t argocd-ui --target argocd-ui .
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 dist/packr build -v -i -ldflags '${LDFLAGS}' -o ${DIST_DIR}/argocd-server ./cmd
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 dist/packr build -v -i -ldflags '${LDFLAGS}' -o ${DIST_DIR}/argocd-application-controller ./cmd
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 dist/packr build -v -i -ldflags '${LDFLAGS}' -o ${DIST_DIR}/argocd-repo-server ./cmd
 	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 dist/packr build -v -i -ldflags '${LDFLAGS}' -o ${DIST_DIR}/argocd ./cmd
 	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 dist/packr build -v -i -ldflags '${LDFLAGS}' -o ${DIST_DIR}/argocd-darwin-amd64 ./cmd
 	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 dist/packr build -v -i -ldflags '${LDFLAGS}' -o ${DIST_DIR}/argocd-windows-amd64.exe ./cmd
-	CGO_ENABLED=0 GOOS=linux GOARCH=amd64 dist/packr build -v -i -ldflags '${LDFLAGS}' -o ${DIST_DIR}/argocd-util ./cmd
-	CGO_ENABLED=0 GOOS=darwin GOARCH=amd64 dist/packr build -v -i -ldflags '${LDFLAGS}' -o ${DIST_DIR}/argocd-util-darwin-amd64 ./cmd
-	CGO_ENABLED=0 GOOS=windows GOARCH=amd64 dist/packr build -v -i -ldflags '${LDFLAGS}' -o ${DIST_DIR}/argocd-util-windows-amd64.exe ./cmd
+	ln -s ${DIST_DIR}/argocd ${DIST_DIR}/argocd-util
+	ln -s ${DIST_DIR}/argocd ${DIST_DIR}/argocd-server
+	ln -s ${DIST_DIR}/argocd ${DIST_DIR}/argocd-application-controller
+	ln -s ${DIST_DIR}/argocd ${DIST_DIR}/argocd-repo-server
+	ln -s ${DIST_DIR}/argocd-darwin-amd64 ${DIST_DIR}/argocd-util-darwin-amd64
+	ln -s ${DIST_DIR}/argocd-windows-amd64.exe ${DIST_DIR}/argocd-util-windows-amd64.exe
 	cp Dockerfile.dev dist
 	docker build -t $(IMAGE_PREFIX)argocd:$(IMAGE_TAG) -f dist/Dockerfile.dev dist
 else
