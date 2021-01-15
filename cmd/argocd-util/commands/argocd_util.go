@@ -23,6 +23,7 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 
+	cmdutil "github.com/argoproj/argo-cd/cmd/util"
 	"github.com/argoproj/argo-cd/common"
 	"github.com/argoproj/argo-cd/util/cli"
 	"github.com/argoproj/argo-cd/util/db"
@@ -47,9 +48,7 @@ var (
 // NewCommand returns a new instance of an argocd command
 func NewCommand() *cobra.Command {
 	var (
-		logFormat string
-		logLevel  string
-		pathOpts  = clientcmd.NewDefaultPathOptions()
+		pathOpts = clientcmd.NewDefaultPathOptions()
 	)
 
 	var command = &cobra.Command{
@@ -72,8 +71,8 @@ func NewCommand() *cobra.Command {
 	command.AddCommand(NewRBACCommand())
 	command.AddCommand(NewGenerateConfigCommand(pathOpts))
 
-	command.Flags().StringVar(&logFormat, "logformat", "text", "Set the logging format. One of: text|json")
-	command.Flags().StringVar(&logLevel, "loglevel", "info", "Set the logging level. One of: debug|info|warn|error")
+	command.Flags().StringVar(&cmdutil.LogFormat, "logformat", "text", "Set the logging format. One of: text|json")
+	command.Flags().StringVar(&cmdutil.LogLevel, "loglevel", "info", "Set the logging level. One of: debug|info|warn|error")
 	return command
 }
 
