@@ -131,3 +131,12 @@ RUN if [ "$BUILD_ALL_CLIS" = "true" ] ; then \
 FROM argocd-base
 COPY --from=argocd-build /go/src/github.com/argoproj/argo-cd/dist/argocd* /usr/local/bin/
 COPY --from=argocd-ui ./src/dist/app /shared/app
+
+USER root
+RUN ln -s /usr/local/bin/argocd /usr/local/bin/argocd-util
+RUN ln -s /usr/local/bin/argocd /usr/local/bin/argocd-server
+RUN ln -s /usr/local/bin/argocd /usr/local/bin/argocd-repo-server
+RUN ln -s /usr/local/bin/argocd /usr/local/bin/argocd-application-controller
+RUN ln -s /usr/local/bin/argocd /usr/local/bin/argocd-dex
+
+USER 999
