@@ -13,6 +13,7 @@ import (
 	apiserver "github.com/argoproj/argo-cd/cmd/argocd-server/commands"
 	util "github.com/argoproj/argo-cd/cmd/argocd-util/commands"
 	cli "github.com/argoproj/argo-cd/cmd/argocd/commands"
+	cmdutil "github.com/argoproj/argo-cd/cmd/util"
 )
 
 const (
@@ -27,6 +28,8 @@ func main() {
 		binaryName = val
 	}
 	switch binaryName {
+	case "argocd", "argocd-linux-amd64", "argocd-darwin-amd64", "argocd-windows-amd64.exe":
+		command = cli.NewCommand()
 	case "argocd-util", "argocd-util-linux-amd64", "argocd-util-darwin-amd64", "argocd-util-windows-amd64.exe":
 		command = util.NewCommand()
 	case "argocd-server":
@@ -38,6 +41,10 @@ func main() {
 	case "argocd-dex":
 		command = dex.NewCommand()
 	default:
+		if suggestionsString := cmdutil.FindSuggestions(binaryName); suggestionsString != "" {
+			fmt.Printf("unknown command %q for %s\n", binaryName, suggestionsString)
+			os.Exit(1)
+		}
 		// default is argocd cli
 		command = cli.NewCommand()
 	}
