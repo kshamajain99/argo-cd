@@ -207,9 +207,6 @@ release-cli: clean-debug image
 	docker cp tmp-argocd-linux:/usr/local/bin/argocd ${DIST_DIR}/argocd-linux-amd64
 	docker cp tmp-argocd-linux:/usr/local/bin/argocd-darwin-amd64 ${DIST_DIR}/argocd-darwin-amd64
 	docker cp tmp-argocd-linux:/usr/local/bin/argocd-windows-amd64.exe ${DIST_DIR}/argocd-windows-amd64.exe
-	ln -s  ${DIST_DIR}/argocd-linux-amd64 ${DIST_DIR}/argocd-util-linux-amd64
-	ln -s ${DIST_DIR}/argocd-darwin-amd64 ${DIST_DIR}/argocd-util-darwin-amd64
-	ln -s ${DIST_DIR}/argocd-windows-amd64.exe ${DIST_DIR}/argocd-util-windows-amd64.exe
 	docker rm tmp-argocd-linux
 
 .PHONY: argocd-util

@@ -268,7 +268,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/argocd-util-linux-amd64
+          asset_path: ./dist/argocd-linux-amd64
           asset_name: argocd-util-linux-amd64
           asset_content_type: application/octet-stream
         if: ${{ env.DRY_RUN != 'true' }}
@@ -279,7 +279,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/argocd-util-darwin-amd64
+          asset_path: ./dist/argocd-darwin-amd64
           asset_name: argocd-util-darwin-amd64
           asset_content_type: application/octet-stream
         if: ${{ env.DRY_RUN != 'true' }}
@@ -290,7 +290,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./dist/argocd-util-windows-amd64.exe
+          asset_path: ./dist/argocd-windows-amd64.exe
           asset_name: argocd-util-windows-amd64.exe
           asset_content_type: application/octet-stream
         if: ${{ env.DRY_RUN != 'true' }}
